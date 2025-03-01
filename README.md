@@ -49,4 +49,44 @@ Lowered Learning Rate: I adjusted the learning rate to avoid overly large update
 Regularization: I added dropout layers to prevent overfitting, which can sometimes cause unpredictable behavior like NaNs in predictions.
 Why I Did It: Ensuring the model could train stably was crucial for getting reliable predictions. Infinity and NaN values not only affect the performance of the model but also disrupt the training process. Stabilizing the training with proper techniques helped the model converge successfully.
 
+**Project Deep Dive**
 
+Data Preprocessing and Scaling:
+
+I began by loading the stock price data from a CSV file into a DataFrame. I then converted the 'date' column to a datetime format and set it as the index of the DataFrame. The dataset was filtered to include only the 'close' price column, which is the key feature for my prediction task. This step was crucial because it ensured that the dataset was organized with time-series information that could be leveraged for sequence-based learning with LSTM.
+
+To ensure stable training, I applied MinMax scaling to the 'close' column. The scaling was done within the range of (0.001, 1) to avoid zero values, as LSTMs can be sensitive to extremely small or large values. I then clipped the scaled values to ensure that they stayed within this range, preventing potential instability. The scaled data contributed to the model by providing it with normalized values, making it easier for the LSTM to learn without being influenced by outliers
+
+After scaling, I created sequences of length 90 from the closing price data. These sequences represented 90 days of stock price history, and each sequence would be used to predict the next day's price. This sequence setup allowed the LSTM to learn temporal dependencies and trends over a set period, which is critical for stock price prediction.
+
+Data Splitting:
+
+Once the data was prepared, I split it into training, validation, and test sets. The training set contained 70% of the data, the validation set had 10%, and the test set had the remaining 20%. This step was necessary to evaluate the model’s performance on unseen data and ensure that it could generalize well. The training set helped the model learn the underlying patterns, the validation set was used to tune hyperparameters and prevent overfitting, and the test set was kept aside to provide a final evaluation.
+
+Model Architecture:
+
+I created an LSTM model using TensorFlow/Keras. The model consisted of three LSTM layers, with 128, 64, and 64 units, respectively. These layers were stacked sequentially, with each having 'tanh' activation and 'sigmoid' for the recurrent activation. LSTM layers are well-suited for time series data like stock prices because they capture temporal dependencies. The first two layers were set with return_sequences=True, meaning that each of those layers would output sequences for the next layer to process, while the final LSTM layer had return_sequences=False to output a single value (the prediction).
+
+Dropout layers were added after each LSTM layer to prevent overfitting, a common problem in deep learning. Dropout randomly disables a fraction of neurons during training, making the model less likely to overfit to the training data. I also added batch normalization after each LSTM and dropout layer. This helped stabilize and accelerate training by normalizing the activations in each layer, improving convergence speed.
+
+The final layer was a Dense layer with a linear activation function, which is suitable for regression tasks like predicting stock prices. This structure helped the model focus on learning from the sequential nature of stock prices, while also preventing overfitting and ensuring smooth training.
+
+Model Compilation and Optimization:
+
+I compiled the model with the AdamW optimizer, which is a variant of Adam with weight decay. This optimizer provides better generalization and helps reduce overfitting. I set a learning rate of 0.00005 and a weight decay of 1e-6 to balance the model’s performance and prevent large weight updates. I also applied gradient clipping using clipnorm=0.5 to prevent exploding gradients, which could lead to NaN values and instability in training.
+
+The loss function I used was Mean Squared Error (MSE), which is common for regression tasks and penalizes larger prediction errors more heavily, encouraging the model to focus on minimizing these errors during training.
+
+Callbacks and Learning Rate Scheduling:
+
+To enhance the model’s performance, I implemented two key callbacks: early stopping and learning rate scheduling. Early stopping monitored the validation loss, and if the loss did not improve after 20 epochs, it would stop the training and restore the best weights. This prevented unnecessary training and ensured that the model didn’t overfit to the training data.
+
+I also used a learning rate schedule with exponential decay, starting with a learning rate of 1e-5. This learning rate decayed by 10% every 500 steps, which helped the model converge more effectively over time. Gradually lowering the learning rate is known to help in achieving better model accuracy in the later stages of training, ensuring fine-tuned predictions.
+
+Model Training:
+
+I trained the model for 100 epochs with a batch size of 32. The training was done using the training data (X_train and Y_train) and validated using the validation set (X_valid and Y_valid). Training for a sufficient number of epochs allowed the model to learn intricate patterns in the stock prices, while the validation set helped ensure that the model didn’t overfit and that it could generalize well.
+
+Each step I took in this process—from data preprocessing and scaling to model design and training—contributed to making the model more effective in learning from historical stock prices and producing accurate predictions for future stock prices. The LSTM model, with its ability to capture temporal dependencies, was ideal for this task. The careful consideration of overfitting, the use of gradient clipping, dropout, and batch normalization ensured stable and efficient training, and the optimizer and learning rate schedule helped the model converge to the best solution.
+
+This approach provided me with valuable insights into how LSTMs can be used in stock price prediction and allowed me to develop a model that could provide meaningful predictions, helping to inform investment decisions.
