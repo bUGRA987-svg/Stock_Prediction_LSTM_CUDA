@@ -1,6 +1,4 @@
-# Stock_Prediction_LSTM_CUDA
-
-
+# NKE Stock Prediction using LSTM with GPU accelerator CUDNN, CUDA
 
 
 **Project Background**
